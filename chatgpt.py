@@ -1,6 +1,7 @@
 import openai
 import socket
 import ssl
+import re
 import time
 import configparser
 import pyshorteners
@@ -35,9 +36,8 @@ realname = config.get('irc', 'realname')
 password = config.get('irc', 'password')
 
 # Define the list of models
-completion_models = ["gpt-3.5-turbo-instruct", "babbage-002", "davinci-002"]
-chatcompletion_models = ["gpt-4", "gpt-4-turbo-preview", "gpt-4-vision-preview", "gpt-4-32k", "gpt-3.5-turbo", "gpt-3.5-turbo-16k"]
-images_models = ["dall-e-2", "dall-e-3"]
+completion_models = ["gpt-3.5-turbo-instruct", "text-davinci-003", "text-davinci-002", "text-davinci-001", "text-curie-001", "text-babbage-001", "text-ada-001", "davinci", "curie", "babbage", "ada", "babbage-002", "davinci-002"]
+chatcompletion_models = ["gpt-4", "gpt-4-1106-preview", "gpt-4-vision-preview", "gpt-4-0613", "gpt-4-32k", "gpt-4-32k-0613", "gpt-3.5-turbo", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-16k", "gpt-3.5-turbo-16k-0613"]
 
 # Connect to IRC server
 def connect(server, port, usessl, password, ident, realname, nickname, channels):
@@ -69,6 +69,13 @@ while True:
         data = irc.recv(4096).decode("UTF-8")
         if data:
             print(data)
+            # Handle PING messages
+            if "PING" in data:
+                ping_message = re.search(r'PING :(.+)', data)
+                if ping_message:
+                    pong_response = "PONG :" + ping_message.group(1) + "\n"
+
+                    irc.send(pong_response.encode("UTF-8"))
     except UnicodeDecodeError:
         continue
     except:
@@ -137,7 +144,7 @@ while True:
                 try:
                     response = openai.Completion.create(
                         model=model,
-                        prompt="Q: " + question + "\nA:",
+                        prompt="Q, " + question + "\nA:",
                         temperature=temperature,
                         max_tokens=max_tokens,
                         top_p=top_p,
@@ -166,10 +173,10 @@ while True:
                 except Exception as e:
                     print("Error: " + str(e))
                     irc.send(bytes(f"PRIVMSG {channel} :An unexpected error occurred. {str(e)}\n", "UTF-8"))
-            elif model in images_models:
+            elif model == "dalle":
                 try:
                     response = openai.Image.create(
-                    prompt="Q: " + question + "\nA:",
+                    prompt="Q, " + question + "\nA:",
                     n=1,
                     size="1024x1024"
                     )
