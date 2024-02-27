@@ -144,7 +144,7 @@ while True:
                 try:
                     response = openai.Completion.create(
                         model=model,
-                        prompt="Q, " + question + "\nA:",
+                        prompt="Q: " + question + "\nA:",
                         temperature=temperature,
                         max_tokens=max_tokens,
                         top_p=top_p,
@@ -176,7 +176,7 @@ while True:
             elif model == "dalle":
                 try:
                     response = openai.Image.create(
-                    prompt="Q, " + question + "\nA:",
+                    prompt="Q: " + question + "\nA:",
                     n=1,
                     size="1024x1024"
                     )
